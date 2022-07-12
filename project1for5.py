@@ -11,7 +11,7 @@ result = cursor.execute(stmt)
 r = result.fetchall()
 
 if r == []:
-    exp = 'CREATE TABLE users (username,password)'
+    exp = 'CREATE TABLE users (username, password, correct, wrong)'
     connection.execute(exp)
 
 
@@ -22,6 +22,8 @@ def application(environ, start_response):
     params = urllib.parse.parse_qs(environ['QUERY_STRING'])
     un = params['username'][0] if 'username' in params else None
     pw = params['password'][0] if 'password' in params else None
+    correct = 0
+    wrong = 0
 
     if path == '/register' and un and pw:
         user = cursor.execute('SELECT * FROM users WHERE username = ?', [un]).fetchall()
@@ -29,17 +31,36 @@ def application(environ, start_response):
             start_response('200 OK', headers)
             return ['Sorry, username {} is taken'.format(un).encode()]
         else:
-            connection.execute('INSERT INTO users VALUES (?, ?)', [un, pw])
-            return ['Username has been successfully created'.encode()]
+             page = '''<!DOCTYPE html>
+            <form action='/register'>
+                <h1>Register</h1>
+                Username <input type="text" name="username">
+                <br>
+                Password <input type="password" name="password"><br>
+                <br>
+                <input type="submit" value="Register"><br>
+                <hr>
+            </form>'''
 
-             # [INSERT CODE HERE. Use SQL commands to insert the new username and password into the table that has been created. Print a message saying the username was created successfully]
+            connection.execute('INSERT INTO login VALUES (?, ?)', [un, pw])
+            connection.commit()
+            headers.append(('Set-Cookie', 'session={}:{}'.format(un, pw)))
+            start_response('200 OK', headers)
+            return [page.encode(), 'You have been successfully registered.'.encode()]
 
     elif path == '/login' and un and pw:
         user = cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', [un, pw]).fetchall()
         if user:
+            page = '''<!DOCTYPE html>
+            <form action="/login">
+            <h1>Login</h1>
+            Username <input type="text" name="username"><br>
+            Password <input type="password" name="password"><br>
+            <input type="submit" value="Log in">
+            </form>'''
             headers.append(('Set-Cookie', 'session={}:{}'.format(un, pw)))
             start_response('200 OK', headers)
-            return ['User {} successfully logged in. <a href="/account">Account</a>'.format(un).encode()]
+            return ['You have successfully logged in. <a href="/account">Account</a>'.encode()]
         else:
             start_response('200 OK', headers)
             return ['Incorrect username or password'.encode()]
@@ -63,7 +84,7 @@ def application(environ, start_response):
         [un, pw] = cookies['session'].value.split(':')
         user = cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', [un, pw]).fetchall()
 
-        if path == '/login' and cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', [un, pw]):
+        #if and cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', [un, pw]):
             #This is where the game begins. This section of is code only executed if the login form works, and if the user is successfully logged in
             if user:
                 correct = 0
