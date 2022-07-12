@@ -1,0 +1,10 @@
+Square
+Rectangle
+Parallelogram
+Triangle
+Pentagon
+Octagon
+Hexagon
+Kite
+Circle
+Trapezoid
