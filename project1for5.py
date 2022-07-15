@@ -90,7 +90,12 @@ def application(environ, start_response):
             correct = 0
             wrong = 0
 
-            cookies = http.cookies.SimpleCookie()
+            if 'score' not in cookies:
+                headers.append(('Set-Cookie', 'score={}:{}'.format(correct, wrong)))
+                cookies.load('score={}:{}'.format(correct, wrong))
+            else:
+                cookies = http.cookies.SimpleCookie()
+                cookies.load(environ['HTTP_COOKIE'])
             if 'HTTP_COOKIE' in environ:
                 correct = int(cookies['score'].value.split(':')[0])
 
@@ -162,7 +167,7 @@ def application(environ, start_response):
 
         else:
             page = '''<!DOCTYPE html>
-            <form action = "/login" style = "background-color:gold"> 
+            <form action = "/" style = "background-color:gold"> 
             <h1> Login </h1>
             Username <input type = "text" name = "username"> 
             <br> 
@@ -170,7 +175,7 @@ def application(environ, start_response):
             <br>
             <input type = "submit" value = "Log in">
             </form >
-            <form action = "/register" style = "background-color:gold">
+            <form action = "/" style = "background-color:gold">
             <h1> Register </h1>
             Username <input type = "text" name = "secondusername"> 
             <br>
@@ -187,7 +192,7 @@ def application(environ, start_response):
                 if not un:
                     return [page.encode()]
                 else:
-                    return [page.encode(), 'Username {} was successfully registered <br> <a href="/account">Account</a>'.format(un).encode()]
+                    return [page.encode(), 'Username {} was successfully logged in <br> <a href="/account">Account</a>'.format(un).encode()]
 
             elif 'secondusername' in params:
                 un2 = params['secondusername'][0] if 'secondusername' in params else None
@@ -198,7 +203,12 @@ def application(environ, start_response):
                 if not un2:
                     return page.encode()
                 else:
-                    return [page.encode(), 'Username {} was successfully logged in <br> <a href="/account">Account</a>'.format(un2).encode()]
+                    return [page.encode(), 'Username {} was successfully registered in <br> <a href="/account">Account</a>'.format(un2).encode()]
+
+            else:
+                start_response('200 OK', headers)
+                if not un:
+                    return [page.encode()]
         # INSERT CODE HERE. Create two forms. One is to log in with a username and password, the other to register a new username and password.###
 
     else:
