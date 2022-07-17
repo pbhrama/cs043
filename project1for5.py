@@ -39,7 +39,7 @@ def application(environ, start_response):
                         <hr>
                     </form>'''
 
-            connection.execute('INSERT INTO multiply VALUES (?, ?)', [un, pw])
+            connection.execute('INSERT INTO users VALUES (?, ?)', [un, pw])
             connection.commit()
             headers.append(('Set-Cookie', 'session={}:{}'.format(un, pw)))
             start_response('200 OK', headers)
@@ -81,7 +81,7 @@ def application(environ, start_response):
         cookies = http.cookies.SimpleCookie()
         cookies.load(environ['HTTP_COOKIE'])
         if 'session' not in cookies:
-            return ['Not logged in <a href="/login">Login</a>'.encode()]
+            return ['Not logged in <a href="/">Login</a>'.encode()]
 
         [un, pw] = cookies['session'].value.split(':')
         user = cursor.execute('SELECT * FROM users WHERE username = ? AND password = ?', [un, pw]).fetchall()
@@ -140,7 +140,7 @@ def application(environ, start_response):
             answer = [a1, n1, n2, n3]
             random.shuffle(answer)
 
-            hyperlink = '<a href="/account?username={}&amp;password={}&amp;factor1={}&amp;factor2={}&amp;answer={}">{}: {}</a><br>'
+            hyperlink = '<a href="/account?username={}&amp;password={}&amp;factor1={}&amp;factor2={}&amp;answer={}">{} {}</a><br>'
 
             page += hyperlink.format(un, pw, f1, f2, answer[0], 'A.', answer[0])
             page += hyperlink.format(un, pw, f1, f2, answer[1], 'B.', answer[1])
@@ -151,13 +151,12 @@ def application(environ, start_response):
             page += '''<h2>Score</h2>
             Correct: {}<br>
             Wrong: {}<br>
-            <a href="/account?reset=true">Reset</a>
+            <a href="/account?reset=true">Reset</a><br>
             </body></html>'''.format(correct, wrong)
 
-        if user:
-            return [page.encode(), 'Logged in: {}. <a href="/logout">Logout</a>'.format(un).encode()]
+            return [page.encode(), '<br>Logged in: {}. <a href="/logout">Logout</a>'.format(un).encode()]
         else:
-            return [page.encode(), 'Not logged in. <a href="/">Login</a>'.encode()]
+            return ['Not logged in. <a href="/login">Login</a>'.encode()]
 
     elif path == '/':
         user = cursor.execute('SELECT username FROM users WHERE username = ?', [un]).fetchall()
@@ -167,43 +166,43 @@ def application(environ, start_response):
 
         else:
             page = '''<!DOCTYPE html>
-            <form action = "/" style = "background-color:gold"> 
-            <h1> Login </h1>
+            <form action = "/"> 
+            <h1> Register </h1>
             Username <input type = "text" name = "username"> 
             <br> 
             Password <input type = "password" name = "password"> 
             <br>
-            <input type = "submit" value = "Log in">
+            <input type = "submit" value = "Register">
             </form >
-            <form action = "/" style = "background-color:gold">
-            <h1> Register </h1>
+            <form action = "/">
+            <h1> Login </h1>
             Username <input type = "text" name = "secondusername"> 
             <br>
             Password <input type = "password" name = "secondpassword"> 
             <br>
-            <input type = "submit" value = "Register">
+            <input type = "submit" value = "Log in">
+            <br>
             </form>'''
 
             if 'username' in params:
-                cursor.execute('INSERT INTO users VALUES (?, ?)', [un, pw])
+                connection.execute('INSERT INTO users VALUES (?, ?)', [un, pw])
                 connection.commit()
                 headers.append(('Set-Cookie', 'session={}:{}'.format(un, pw)))
                 start_response('200 OK', headers)
                 if not un:
                     return [page.encode()]
                 else:
-                    return [page.encode(), 'Username {} was successfully logged in <br> <a href="/account">Account</a>'.format(un).encode()]
+                    return [page.encode(), 'Username {} was successfully registered <br> <a href="/account">Account</a>'.format(un).encode()]
 
             elif 'secondusername' in params:
                 un2 = params['secondusername'][0] if 'secondusername' in params else None
                 pw2 = params['secondpassword'][0] if 'secondpassword' in params else None
-                # user = cursor.execute('SELECT username FROM users WHERE username = ?', [un2])
                 headers.append(('Set-Cookie', 'session={}:{}'.format(un2, pw2)))
                 start_response('200 OK', headers)
                 if not un2:
                     return page.encode()
                 else:
-                    return [page.encode(), 'Username {} was successfully registered in <br> <a href="/account">Account</a>'.format(un2).encode()]
+                    return [page.encode(), 'Username {} was successfully logged in <br> <a href="/account">Account</a>'.format(un2).encode()]
 
             else:
                 start_response('200 OK', headers)
