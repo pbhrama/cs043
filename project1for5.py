@@ -98,6 +98,7 @@ def application(environ, start_response):
                 cookies.load(environ['HTTP_COOKIE'])
             if 'HTTP_COOKIE' in environ:
                 correct = int(cookies['score'].value.split(':')[0])
+                wrong = int(cookies['score'].value.split(':')[1])
 
                 # [INSERT CODE FOR COOKIES HERE]
 
